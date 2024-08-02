@@ -4,6 +4,8 @@ import bodyParser from "body-parser"
 import { failedResponse } from "./support/http"; 
 import { httpLogger } from "./httpLogger";
 import Database from './db'
+import { checkApiKey } from "./support/middleware";
+import { authRouter } from "./routers/userRouters";
 
 const app:Application = express();
 
@@ -15,9 +17,11 @@ app.use(
     })
 )
 app.use(httpLogger)
+app.use(checkApiKey);
 app.use(bodyParser.urlencoded({ extended: true , limit: '50mb'}));
 app.use(express.static('./uploads'))
 app.use(express.json())
+app.use("/",authRouter)
 
 // CONNECT TO DB 
 if (process.env.PROJ_ENV === 'DEV' || process.env.PROJ_ENV === 'PRODUCTION') {
