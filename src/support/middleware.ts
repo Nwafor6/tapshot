@@ -81,7 +81,7 @@ export async function handlefileUpload(req: Request, res: Response, next: NextFu
 
 
 
-const TAP_SHOT_API_KEY = process.env.TAP_SHOT_API_KEY;
+export const TAP_SHOT_API_KEY = process.env.TAP_SHOT_API_KEY;
 
 // Middleware to check API key
 export const checkApiKey = (req: Request, res: Response, next: NextFunction) => {
