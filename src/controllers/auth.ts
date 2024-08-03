@@ -23,7 +23,7 @@ export class Onboarding {
         await user.save();
       }
 
-      const accessToken = generateJwtToken({ telegramId: value.telegramId });
+      const accessToken = generateJwtToken({ telegramId: value.telegramId, id:user._id });
       const payload = {
         telegramId: user.telegramId,
         level:user.level,

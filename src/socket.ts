@@ -2,12 +2,12 @@ import { Server } from "socket.io";
 import { io } from ".";
 import { authenticate } from "./socket/authentication";
 import { logger } from "./logger";
-import { handleRecieveSendLocation } from "./socket/sendMessageHandler"; 
+import { handleRecieveTap } from "./socket/sendMessageHandler"; 
 
 export const EVENTS = {
   CONNECTION: "connection",
   CLIENT: {
-    SEND_ORDER_LOCATION: "SEND_ORDER_LOCATION",
+    TAP: "TAP",
     JOIN_ROOM: "JOIN_ROOM",
     RECEIVE_LOCATION_FROM_SERVER: "RECEIVE_LOCATION_FROM_SERVER",
   },
@@ -25,7 +25,7 @@ export async function socket() {
     io.use(authenticate);
 
     io.on(EVENTS.CONNECTION, (socket) => {
-        const roomId = socket.user.userType === "rider" ? socket.user.userId : socket.orderNumber;
+        const roomId = socket.user.id
 
         if (!roomId) {
             logger.error("Room ID is not defined");
@@ -33,11 +33,7 @@ export async function socket() {
         }
 
         socket.join(roomId);
-        logger.info(`${socket.user.userType} joined room ${roomId}`);
-        if(socket.user.userType !== "rider"){
-            
-            io.to(roomId).emit(EVENTS.CLIENT.RECEIVE_LOCATION_FROM_SERVER, socket.coordinates);
-        }
+        logger.info(`${socket.user} joined room ${roomId}`);
 
         io.to(roomId).emit(EVENTS.SERVER.WELCOME, `Welcome ${roomId}`);
 
@@ -45,8 +41,8 @@ export async function socket() {
             logger.info(`Client disconnected: ${roomId}`);
         });
 
-        socket.on(EVENTS.CLIENT.SEND_ORDER_LOCATION, async (message: any) => {
-            await handleRecieveSendLocation(socket, message);
+        socket.on(EVENTS.CLIENT.TAP, async (message: any) => {
+            await handleRecieveTap(socket, message);
         });
     });
 }

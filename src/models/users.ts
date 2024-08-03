@@ -5,6 +5,8 @@ import { IUser, IWallet } from '../interfaces/users';
 // User Schema and Model
 const UserSchema: Schema<IUser> = new Schema<IUser>({
   telegramId: { type: String, required: true },
+  status: { type: String, default: "online" },
+  // telegramDate:Date,
   level: { type: Number, default: 1 },
   role: { type: String, enum: ["user", "admin"], default: "user" },
 }, { timestamps: true });

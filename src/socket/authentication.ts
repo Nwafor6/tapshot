@@ -1,42 +1,27 @@
 import { verifyJwtToken } from "../support/generateTokens";
 import { logger } from "../logger";
-import { Delivery, Order } from "../models/resturant";
+import { TAP_SHOT_API_KEY } from "../support/middleware";
+
 
 export async function authenticate(socket: any, next: any) {
     const token = socket.handshake.headers.token;
+    const apikey = socket.handshake.headers.apikey;
 
     if (!token) {
         logger.info("Token not provided");
         return next(new Error("Authentication error"));
     }
+    if (!apikey) {
+        return next(new Error ( "API key is missing"))
+      }
+    
+      if (apikey !== TAP_SHOT_API_KEY) {
+        return next(new Error ( "Invalid apikey"))
+      }
 
     try {
         const decoded = verifyJwtToken(token);
         socket.user = decoded;
-        socket.orderNumber = socket.handshake.query.orderNumber;
-
-        if (socket.user.userType === "user" || socket.user.userType === "admin") {
-            if (!socket.orderNumber || socket.orderNumber === "undefined") {
-                logger.info("Order number not in query params");
-                return next(new Error("Order number not in query params"));
-            }
-
-            // Validate ownership
-            const order = await Order.findOne({ orderNumber: socket.orderNumber });
-
-            if (!order) {
-                logger.info("Order number not found");
-                return next(new Error("Order number not found"));
-            }
-
-            if (socket.user.userType === "user" && order.user.toString() !== socket.user.userId) {
-                logger.info("Permission denied for user");
-                return next(new Error("Permission denied"));
-            };
-
-            const coordinate = await Delivery.findOne({order:order})
-            socket.coordinates = coordinate?.coordinates
-        }
 
         next();
     } catch (error: any) {
