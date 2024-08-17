@@ -6,6 +6,8 @@ import { S3Client,S3ClientConfig, PutObjectCommand } from "@aws-sdk/client-s3"
 import { failedResponse, successResponse } from "./http";
 import crypto from "crypto"
 import { verifyJwtToken } from "./generateTokens";
+import { User } from "../models/users";
+import { writeErrorsToLogs } from "./helpers";
 
 dotenv.config()
  
@@ -96,4 +98,28 @@ export const checkApiKey = (req: Request, res: Response, next: NextFunction) => 
   }
 
   next();
+};
+
+export const IsAuthenticatedUser = async (req: Request, res: Response, next: NextFunction) => {
+  if (!req.headers.authorization) {
+    return failedResponse(res, 401, 'Access denied. Authorization header missing.');
+  }
+
+  const token = req.headers.authorization.split(" ")[1] || req.cookies.token;
+  if (!token) {
+    return failedResponse(res, 401, 'Access denied. No token provided.');
+  }
+
+  try {
+    const decodedToken = verifyJwtToken(token);
+
+    (req as any).user = {
+      telegramId: decodedToken.telegramId,
+      id: decodedToken.id
+    };
+    next();
+  } catch (error: any) {
+    writeErrorsToLogs(error.message)
+    return failedResponse(res, 401, 'Invalid access token.');
+  }
 };
