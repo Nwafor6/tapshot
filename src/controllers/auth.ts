@@ -13,13 +13,27 @@ export class Onboarding {
       if (error) return failedResponse(res, 400, `${error.details[0].message}`);
 
       let user = await User.findOne({ telegramId: value.telegramId });
+      const refCode = req.query.refCode;
       if (!user) {
+        // check if refCode is there
         user = new User({
           telegramId: value.telegramId,
           level: value.level || 1,
           role: value.role || "user",
+          refBy: refCode ? refCode : ""
         });
         await user.save();
+        if (refCode) {
+          // credit user;
+          const refUser = await User.findOne({ code: refCode });
+          if (refUser) {
+            const refUserWallet = await Wallet.findOne({ user: refUser._id });
+            if (refUserWallet) {
+              refUserWallet.balance += 10000;
+              await refUserWallet.save();
+            }
+          }
+        }
       }
 
       const accessToken = generateJwtToken({
@@ -31,6 +45,7 @@ export class Onboarding {
         level: user.level,
         _id: user._id,
         role: user.role,
+        code: user.code
       };
 
       // Fetch wallet information
